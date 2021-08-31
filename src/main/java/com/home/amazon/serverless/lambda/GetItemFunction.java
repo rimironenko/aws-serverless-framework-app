@@ -37,7 +37,6 @@ public class GetItemFunction implements RequestHandler<APIGatewayProxyRequestEve
         Map<String, String> pathParameters = input.getPathParameters();
         if (pathParameters != null) {
             String itemPartitionKey = pathParameters.get(Book.PARTITION_KEY);
-            logger.log("Partition key: " + itemPartitionKey);
             Book item = booksTable.getItem(Key.builder().partitionValue(itemPartitionKey).build());
             if (item != null) {
                 try {

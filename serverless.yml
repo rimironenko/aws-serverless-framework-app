@@ -15,9 +15,10 @@ provider:
       Action:
         - dynamodb:DescribeTable
         - dynamodb:Query
-        - dynamodb:Scan
         - dynamodb:GetItem
-        - dynamodb:BatchGetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
       Resource: "arn:aws:dynamodb:${aws:region}:${aws:accountId}:table/${self:provider.environment.TABLE}"
 
 package:
@@ -30,6 +31,24 @@ functions:
       - http:
           path: /books/{isbn}
           method: get
+  puttItem:
+    handler: com.home.amazon.serverless.lambda.PutItemFunction
+    events:
+      - http:
+          path: /books
+          method: post
+  updatetItem:
+    handler: com.home.amazon.serverless.lambda.UpdateItemFunction
+    events:
+      - http:
+          path: /books/{isbn}
+          method: put
+  deletetItem:
+    handler: com.home.amazon.serverless.lambda.DeleteItemFunction
+    events:
+      - http:
+          path: /books/{isbn}
+          method: delete
 
 resources:
   Resources:

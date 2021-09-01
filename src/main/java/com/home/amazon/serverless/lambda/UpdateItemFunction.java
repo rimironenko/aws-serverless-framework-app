@@ -32,15 +32,16 @@ public class UpdateItemFunction implements RequestHandler<APIGatewayProxyRequest
         String responseBody = "";
         if (body != null && !body.isEmpty()) {
             ObjectMapper objectMapper = new ObjectMapper();
-            Book item = objectMapper.convertValue(body, Book.class);
-            if (item != null) {
-                DynamoDbTable<Book> booksTable = dbClient.table(tableName, bookTableSchema);
-                Book updateResult = booksTable.updateItem(item);
-                try {
+            Book item;
+            try {
+                item = objectMapper.readValue(body, Book.class);
+                if (item != null) {
+                    DynamoDbTable<Book> booksTable = dbClient.table(tableName, bookTableSchema);
+                    Book updateResult = booksTable.updateItem(item);
                     responseBody = objectMapper.writeValueAsString(updateResult);
-                } catch (JsonProcessingException e) {
-                    context.getLogger().log("Failed create a JSON response: " + e);
                 }
+            } catch (JsonProcessingException e) {
+                context.getLogger().log("Failed to process JSON: " + e);
             }
         }
         return new APIGatewayProxyResponseEvent().withStatusCode(200)

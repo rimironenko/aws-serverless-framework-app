@@ -4,6 +4,8 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.home.amazon.serverless.model.Book;
 import com.home.amazon.serverless.utils.DependencyFactory;
@@ -32,12 +34,18 @@ public class PutItemFunction implements RequestHandler<APIGatewayProxyRequestEve
         String body = request.getBody();
         int statusCode = STATUS_CODE_NO_CONTENT;
         if (body != null && !body.isEmpty()) {
-            Book item = new ObjectMapper().convertValue(body, Book.class);
-            if (item != null) {
-                DynamoDbTable<Book> booksTable = dbClient.table(tableName, bookTableSchema);
-                booksTable.putItem(item);
-                statusCode = STATUS_CODE_CREATED;
+            Book item;
+            try {
+                item = new ObjectMapper().readValue(body, Book.class);
+                if (item != null) {
+                    DynamoDbTable<Book> booksTable = dbClient.table(tableName, bookTableSchema);
+                    booksTable.putItem(item);
+                    statusCode = STATUS_CODE_CREATED;
+                }
+            } catch (JsonProcessingException e) {
+                context.getLogger().log("Failed to deserialize JSON: " + e);
             }
+
         }
         return new APIGatewayProxyResponseEvent().withStatusCode(statusCode)
                 .withIsBase64Encoded(Boolean.FALSE)

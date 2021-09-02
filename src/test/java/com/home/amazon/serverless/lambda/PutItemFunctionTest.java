@@ -16,6 +16,9 @@ import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -46,6 +49,9 @@ public class PutItemFunctionTest {
         testBook.setIsbn(TEST_PARTITION_KEY_VALUE);
         when(client.table(eq(TEST_TABLE_NAME), any(TableSchema.class))).thenReturn(table);
         when(request.getBody()).thenReturn(new ObjectMapper().writeValueAsString(testBook));
+        Map<String, String> pathParameters = new HashMap<>();
+        pathParameters.put(Book.PARTITION_KEY, TEST_PARTITION_KEY_VALUE);
+        when(request.getPathParameters()).thenReturn(pathParameters);
 
         try (MockedStatic<DependencyFactory> dependencyFactoryMockedStatic = mockStatic(DependencyFactory.class)) {
             dependencyFactoryMockedStatic.when(DependencyFactory::dynamoDbEnhancedClient).thenReturn(client);
@@ -54,6 +60,26 @@ public class PutItemFunctionTest {
             APIGatewayProxyResponseEvent response = handler.handleRequest(request, context);
             verify(table).putItem(eq(testBook));
             assertEquals(PutItemFunction.STATUS_CODE_CREATED, response.getStatusCode());
+        }
+
+    }
+
+    @Test
+    public void shouldNotPutItemIfIsbnIsDifferent() throws JsonProcessingException {
+        Book testBook = new Book();
+        testBook.setIsbn(TEST_PARTITION_KEY_VALUE);
+        when(request.getBody()).thenReturn(new ObjectMapper().writeValueAsString(testBook));
+        Map<String, String> pathParameters = new HashMap<>();
+        pathParameters.put(Book.PARTITION_KEY, "1234");
+        when(request.getPathParameters()).thenReturn(pathParameters);
+
+        try (MockedStatic<DependencyFactory> dependencyFactoryMockedStatic = mockStatic(DependencyFactory.class)) {
+            dependencyFactoryMockedStatic.when(DependencyFactory::dynamoDbEnhancedClient).thenReturn(client);
+            dependencyFactoryMockedStatic.when(DependencyFactory::tableName).thenReturn(TEST_TABLE_NAME);
+            PutItemFunction handler = new PutItemFunction();
+            APIGatewayProxyResponseEvent response = handler.handleRequest(request, context);
+            verifyNoInteractions(table);
+            assertEquals(PutItemFunction.STATUS_CODE_BAD_REQUEST, response.getStatusCode());
         }
 
     }

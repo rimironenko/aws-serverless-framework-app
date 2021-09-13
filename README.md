@@ -7,6 +7,8 @@ The architecture of the application is in the picture given below.
 
 ![image](https://miro.medium.com/max/1400/1*hkYSOC3c1xv9svTJOzgLsA.png)
 
+Please read more about the application in my [Medium blog post](https://medium.com/@rostyslav.myronenko/the-serverless-framework-for-an-aws-serverless-java-application-42beba675283).
+
 ## Prerequisites
 - Java 1.8+
 - Apache Maven
